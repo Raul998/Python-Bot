@@ -20,8 +20,10 @@ def rw_credentials():
         credential_dictionary["street"] = input("street: ")
         credential_dictionary["house_number"] = input("house number: ")
         credential_dictionary["city"] = input("city: ")
-        credential_dictionary["postalcode"] = input("postalcode: ")
+        credential_dictionary["ZIP"] = input("ZIP: ")
         credential_dictionary["state"] = input("state: ")
+        credential_dictionary["email"] = input("email: ")
+        credential_dictionary["cellphone"] = input("cellphone: ")
 
         with open("credentials_new.json", "w") as file:
             json.dump(credential_dictionary, file, indent=4)
