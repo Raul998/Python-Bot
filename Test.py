@@ -1,49 +1,92 @@
+import requests
+import json
 from selenium import webdriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
 import ReadOrWriteCredentials
 
+def availability_check():
+    r = requests.get('https://www.shoepalace.com/collections/men/products.json')
+    products = json.loads((r.text))['products']
+    for product in products:
+        # print(product['title'])
+        product_name = product['title']
+        if product_name == 'Air Max 97 Mens Running Shoe (White)':
+            product_url = 'https://www.shoepalace.com/collections/men/products/' + product['handle']
+            print('Found Item')
+            return (product_url)
+    else:
+        return False
 
 
-def connecting_to_site():
-    return driver.get("https://www.converse.com/shop/p/chuck-taylor-all-star-unisex-low-top-shoe/M9696MP.html?dwvar_M9696MP_color=optical%20white&styleNo=M7652&cgid=chuck-taylor-all-star-shoes")
+def checkout_process(url):
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--incognito")
 
-def clicking_to_buy():
-    buy = driver.find_element_by_xpath('//*[@id="variationDropdown-size"]')
-    buy.click()
-    buy = driver.find_element_by_xpath('//*[@id="variationDropdown-size"]/option[16]')
-    buy.click()
-    driver.implicitly_wait(5)
-    add_cart = driver.find_element_by_xpath('//*[@id="add-to-cart-M7652_100"]')
-    add_cart.click()
-# checkout = driver.find_element_by_xpath('//*[@id="toggleID-2949--target"]/div[4]/div[4]/a')
-# checkout.click()
-def inserting_shipping():
-    driver.get("https://www.converse.com/shipping")
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_firstName"]')
-    input.send_keys(credentials["firstName"])
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_lastName"]')
-    input.send_keys(credentials["lastName"])
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_address1"]')
-    input.send_keys(credentials["street"] + ' ' + credentials["house_number"])
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_address2"]')
-    input.send_keys(" ")
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_city"]')
-    input.send_keys(credentials["city"])
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_postal"]')
-    input.send_keys(credentials["postal"])
-    input = driver.find_element_by_xpath('//*[@id="dwfrm_singleshipping_shippingAddress_addressFields_states_state"]')
-    input.send_keys(credentials["state"])
+    driver = webdriver.Chrome(chrome_options=chrome_options)
+
+    driver.implicitly_wait(2)
+    driver.maximize_window()
+    driver.get(str(url))
+
+    # Selecting Size
+    driver.find_element_by_xpath('//div[@data-value="9.5"]').click()
+    time.sleep(2)
+
+    # Add To Cart
+    driver.find_element_by_xpath('//div[@class="productForm-buttons"]').click()
+    time.sleep(3)
+
+    # Checkout
+    driver.find_element_by_xpath('//button[@name="checkout"]').click()
+    time.sleep(1)
+
+    # Email
+    driver.find_element_by_xpath('//input[@placeholder="Email"]').send_keys(credentials["email"])
+    time.sleep(1)
+
+    # First Name
+    driver.find_element_by_xpath('//input[@placeholder="First name"]').send_keys(credentials["firstName"])
+    time.sleep(1)
+
+    # Last Name
+    driver.find_element_by_xpath('//input[@placeholder="Last name"]').send_keys(credentials["lastName"])
+    time.sleep(1)
+
+    # Addres
+    driver.find_element_by_xpath('//input[@placeholder="Address"]').send_keys(credentials["street"] + ' ' + credentials["house_number"])
+    time.sleep(1)
+
+    # City
+    driver.find_element_by_xpath('//input[@placeholder="City"]').send_keys(credentials["city"])
+    time.sleep(1)
+
+    # Zip
+    driver.find_element_by_xpath('//input[@placeholder="ZIP code"]').send_keys(credentials["ZIP"])
+    time.sleep(1)
+
+    # phone
+    driver.find_element_by_xpath('//input[@placeholder="Phone"]').send_keys(credentials["cellphone"] + u'\ue007')
+
+    # Continue to Payment
+    driver.find_element_by_xpath('//button[@id="continue_button"]').click()
+
+    # Card Number
+    driver.find_element_by_xpath('//input[@placeholder="Card number"]').send_keys('1234567890')
+
+    # Name on Card
+    driver.find_element_by_xpath('//input[@placeholder="Name on card"]').send_keys('Harry Potter')
+
+    #  Expiration Data
+    driver.find_element_by_xpath('//input[@placeholder="Expiration date (MM / YY)"]').send_keys('0121')
+
+    #  Security Code
+    driver.find_elements_by_xpath('//input[@placeholder="Security code"]').send_keys('123' + u'\ue007')
 
 credentials = ReadOrWriteCredentials.rw_credentials()
-driver = webdriver.Chrome()
-connecting_to_site()
-clicking_to_buy()
-driver.implicitly_wait(5)
-inserting_shipping()
-driver.implicitly_wait(5)
-driver.quit()
+while True:
+    my_url = availability_check()
+    if my_url != False:
+        checkout_process(my_url)
+        break
+    else:
+        print('No')
